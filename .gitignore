@@ -1,0 +1,5 @@
+.DS_Store
+*.pdf
+*.program.json
+*backup*.json
+*logs*.json
