@@ -646,7 +646,8 @@ function vWork(){
     }
     prevDone=comp;
   });
-  h+=`</div><button class="pill g" id="finish" style="width:100%;height:60px;font-size:22px;margin:14px 0 6px">End drill</button>`;
+  h+=`</div><button class="pill g" id="finish" style="width:100%;height:60px;font-size:22px;margin:14px 0 6px">End drill</button>
+    <button class="pill d" id="delDrill" style="display:block;margin:14px auto 8px;color:var(--red);font-size:14px;padding:8px 16px;box-shadow:inset 0 0 0 2px var(--red);background:transparent">Delete drill log</button>`;
   $("#view").innerHTML=h;
   $("#warmTog").onclick=()=>{warmOpen=!warmOpen;vWork()};
   $("#clkBtn").onclick=clkToggle;
@@ -658,7 +659,7 @@ function vWork(){
   const acp=$("#acPlus2"), acd=$("#acDone2");
   if(acp) acp.onclick=()=>{if(AC){AC.left+=15;tickUI()}};
   if(acd) acd.onclick=()=>{AC=null;vWork()};
-  bindSets(); $("#finish").onclick=finish;
+  bindSets(); $("#finish").onclick=finish; $("#delDrill").onclick=askDeleteDrill;
 }
 function unitShort(u){return u==="reps"?"":u==="reps/side"?"/side":u==="sec"?"s":u==="sec/side"?"s/side":u==="rounds"?"rds":""}
 function exCard(it,ei,collapsible){
@@ -812,6 +813,29 @@ function finish(){
 function sickbayLines(arms){
   const sb=(PROG&&PROG.sickbay)||{}; const L=[...(sb.always||[]),...((arms?sb.armDay:sb.otherDay)||[])];
   return L.map(x=>"• "+esc(x)).join("<br>");
+}
+function askDeleteDrill(){
+  const {w,d}=cur, k=key(w,d), n=S.logs.filter(l=>inP(l)&&l.w===w&&l.d===d).length;
+  $("#modal").innerHTML=`<div class="elbow" style="margin-bottom:10px"><div class="cap" style="background:var(--red)"></div><div class="bar"><div class="seg" style="flex:1;background:var(--red);border-radius:0 9px 9px 0"></div></div></div>
+   <div class="big" style="color:var(--red)">Delete drill log?</div>
+   <div class="note" style="margin:12px 0 14px;font-size:16px;line-height:1.45"><b>W${w} · D${d} · ${esc(DAYS[d-1].name)}</b>: ${n} logged set${n===1?"":"s"}.<br><br>This removes that day's sets, clock time and drafts, and clears its complete or missed status. Other days, other history and the program aren't touched. This can't be undone.</div>
+   <label class="label" for="delIn">Type DELETE to confirm</label>
+   <input id="delIn" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;margin:8px 0 14px;height:52px;border-radius:12px;border:2px solid var(--red);background:#000;color:var(--text);padding:0 14px;font-size:20px;letter-spacing:.12em;-webkit-user-select:text;user-select:text">
+   <button class="pill r" id="delOk" disabled style="width:100%;height:56px;font-size:20px;opacity:.35">Delete</button>
+   <button class="pill d" id="delNo" style="width:100%;height:50px;font-size:18px;margin-top:8px">Cancel</button>`;
+  $("#modal").classList.add("on");
+  const inp=$("#delIn"), ok=$("#delOk");
+  inp.oninput=()=>{const good=inp.value.trim().toUpperCase()==="DELETE"; ok.disabled=!good; ok.style.opacity=good?"1":".35"};
+  $("#delNo").onclick=()=>$("#modal").classList.remove("on");
+  ok.onclick=()=>{ if(inp.value.trim().toUpperCase()!=="DELETE") return;
+    S.logs=S.logs.filter(l=>!(inP(l)&&l.w===w&&l.d===d));
+    delete S.done[k]; if(S.skipped) delete S.skipped[k]; delete S.drafts[k]; if(S.clock) delete S.clock[k];
+    if(AC&&AC.w===w&&AC.d===d) AC=null;
+    if(sIdx(w,d)<sIdx(S.ptr.w,S.ptr.d)) S.ptr={w,d};
+    save(); $("#modal").classList.remove("on");
+    buildSession(w,d); openEx=new Set(); warmOpen=null; addOpen=false;
+    toast("Drill log deleted · "+n+" set"+(n===1?"":"s")); vWork(); window.scrollTo(0,0);
+  };
 }
 /* ---------- records ---------- */
 let openHist=null;
