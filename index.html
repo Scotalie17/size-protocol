@@ -199,6 +199,8 @@ body.flash::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:
 .hist-item.drx{display:block;width:100%;text-align:left;text-transform:none;letter-spacing:normal;color:var(--text)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .chips span{background:var(--dim);border-radius:12px;padding:3px 10px;font-size:15px;color:var(--text)}
+.undr .acd{padding-left:4px;margin:-4px 0 6px}
+.undr .acl{margin:0 0 8px}
 /* ---------- nav ---------- */
 nav{position:fixed;left:0;right:0;bottom:0;background:#000;padding:8px 8px calc(8px + var(--safe-b));display:grid;grid-template-columns:1.1fr 1.1fr .75fr 1.35fr;gap:6px;z-index:20}
 nav button{height:54px;font-size:14px;padding:0 4px;font-weight:600;border-radius:0}
@@ -695,14 +697,31 @@ function completeBurst(early){
   if(VIEW==="work") vWork();
 }
 /* alert: flash + optional beep (sound only plays while the app is on screen) */
-let actx=null;
-function unlockAudio(){try{if(!actx){const A=window.AudioContext||window.webkitAudioContext; if(A) actx=new A();} if(actx&&actx.state==="suspended") actx.resume();}catch(e){}}
+/* Beep as media audio so it sounds even when the phone is on silent.
+   iOS may briefly lower or pause other audio while it plays. */
+function makeBeepWav(times){
+  const rate=22050, tone=0.16, gap=0.08, n=Math.floor(rate*(times*tone+(times-1)*gap+0.05));
+  const buf=new ArrayBuffer(44+n*2), v=new DataView(buf), w=(o,str)=>{for(let i=0;i<str.length;i++)v.setUint8(o+i,str.charCodeAt(i))};
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const t=i/rate, k=Math.floor(t/(tone+gap)), lt=t-k*(tone+gap);
+    let a=0; if(k<times&&lt<tone){const env=Math.min(1,lt/0.01,(tone-lt)/0.03); a=Math.sin(2*Math.PI*880*t)*0.6*env;}
+    v.setInt16(44+i*2,Math.round(a*32767),true);}
+  return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+}
+const BEEPS={}; let audioUnlocked=false;
+function beepEl(times){ if(!BEEPS[times]){ try{ const a=new Audio(makeBeepWav(times)); a.preload="auto"; a.setAttribute("playsinline",""); BEEPS[times]=a; }catch(e){} } return BEEPS[times]; }
+function unlockAudio(){ // iOS needs one tap before audio can play later from a timer
+  if(audioUnlocked||!S.settings.beep) return;
+  [1,2].forEach(t=>{const a=beepEl(t); if(!a) return; a.muted=true; const p=a.play(); if(p&&p.then) p.then(()=>{a.pause();a.currentTime=0;a.muted=false;audioUnlocked=true}).catch(()=>{a.muted=false}); });
+}
 document.addEventListener("click",unlockAudio,{passive:true});
 function beep(times){
-  if(!S.settings.beep||!actx) return;
-  try{for(let i=0;i<times;i++){const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*0.22;
-    o.frequency.value=880; o.type="sine"; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
-    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+0.18);}}catch(e){}
+  if(!S.settings.beep) return;
+  try{ if(navigator.audioSession) navigator.audioSession.type="transient"; }catch(e){}
+  const a=beepEl(times); if(!a) return;
+  try{ a.muted=false; a.currentTime=0; const p=a.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+  setTimeout(()=>{ try{ if(navigator.audioSession) navigator.audioSession.type="auto"; }catch(e){} },900);
 }
 function alertBurst(){
   document.body.classList.remove("flash"); void document.body.offsetWidth; document.body.classList.add("flash");
@@ -730,11 +749,11 @@ function vWork(){
   const act=activeEi(), vis=visibleIdx(); let prevDone=wDone, prevEi=null;
   cur.list.forEach((it,ei)=>{
     if(it.section==="add" && cur.list[ei-1].section==="core"){
-      if(!addOpen && prevEi!==null){ const bh=burstBetween(prevEi,true); if(bh) h+=bh; prevEi=null; }
+
       h+=`<div class="tl">${railHTML(prevDone?LINE_DONE:LINE_TODO,DOT(10,"var(--lav)"),addOpen?LINE_TODO:"#000")}<div class="tlc"><button class="tlrow" id="addTog"><span class="tn" style="color:var(--lav)">${addOpen?"▾":"+"} Secondary drill</span><span class="tm">${PROG.addOnMinutes||10} min · ${cur.list.filter(x=>x.section==="add").length} lifts · optional</span></button></div></div>`;
     }
     if(it.section==="add" && !addOpen) return;
-    if(prevEi!==null) h+=burstBetween(prevEi,false);
+
     const comp=exComplete(it), isAct=ei===act, expanded=isAct||openEx.has(ei);
     const top=prevDone?LINE_DONE:LINE_TODO, bot=comp?LINE_DONE:LINE_TODO;
     if(expanded){
@@ -742,7 +761,7 @@ function vWork(){
       h+=`<div class="tl" ${isAct?'id="activeEx"':""}>${railHTML(top,dot,bot)}<div class="tlc">${exCard(it,ei,!isAct)}</div></div>`;
     }else if(comp){
       const res=it.rows.map(r=>(hasWeight(it.ex)?(r.wt||"BW")+"×":"")+r.r+unitShort(it.ex.unit)).join(" · ");
-      h+=`<div class="tl">${railHTML(top,DOT(14,"#5ec49a"),bot)}<div class="tlc"><button class="tlrow" data-tog="${ei}"><span class="tn" style="color:var(--muted)">${esc(it.ex.name)}</span><span class="tm" style="color:#5ec49a">${esc(res)}</span></button></div></div>`;
+      h+=`<div class="tl">${railHTML(top,DOT(14,"#5ec49a"),bot)}<div class="tlc"><button class="tlrow" data-tog="${ei}"><span class="tn" style="color:var(--muted)">${esc(it.ex.name)}</span><span class="tm" style="color:#5ec49a">${esc(res)}</span></button>${burstUnder(it)}</div></div>`;
     }else{
       const wt=hasWeight(it.ex)?" · "+(it.rows[0].wt||"BW")+(it.rows[0].wt?" lb":""):"";
       const some=it.rows.some(r=>r.logged);
@@ -750,7 +769,7 @@ function vWork(){
     }
     prevDone=comp; prevEi=ei;
   });
-  if(prevEi!==null){ const bh=burstBetween(prevEi,true); if(bh) h+=bh; }
+
   const cDone=day.cool.length && M.cool.length>=day.cool.length;
   if(day.cool.length) h+=`<div class="tl">${railHTML(prevDone?LINE_DONE:LINE_TODO,DOT(14,cDone?"#5ec49a":"var(--dim)"),"#000")}<div class="tlc">
     <button class="tlrow" id="coolTog"><span class="tn" style="color:${cDone?"var(--muted)":"var(--sky)"}">${coolOpen?"▾":"▸"} Cool-down</span><span class="tm" style="color:${cDone?"#5ec49a":"var(--muted)"}">${M.cool.length} / ${day.cool.length}</span></button>
@@ -778,6 +797,12 @@ function vWork(){
   bindSets(); $("#finish").onclick=finishCheck; $("#delDrill").onclick=askDeleteDrill;
   if(justBurst){ justBurst=false; const n=document.querySelector("#activeEx .set:not(.logged)"); if(n) n.classList.add("nextup"); }
 }
+function isLastVisible(ei){const v=visibleIdx(); return v[v.length-1]===ei}
+function burstUnder(it){ // final-set burst shown right under a collapsed lift
+  const last=it.rows.length-1, live=AC&&AC.w===cur.w&&AC.d===cur.d&&AC.exId===it.ex.id&&AC.si===last;
+  if(it.ex.kind==="cardio"||S.settings.accel<=0||!(live||burstRec(it.ex.id,last))) return "";
+  return `<div class="undr">${burstHTML(it.ex.id,last,false)}</div>`;
+}
 function burstBetween(ei,trailing){
   const it=cur.list[ei], last=it.rows.length-1, exId=it.ex.id;
   if(it.ex.kind==="cardio"||S.settings.accel<=0) return "";
@@ -801,7 +826,10 @@ function exCard(it,ei,collapsible){
       <button class="wbtn ${hasWeight(ex)?"":"na"}" data-act="w">${wtxt}${hasWeight(ex)&&r.wt>0?"<small>LB</small>":""}</button>
       <div class="step"><button data-act="r-">−</button><span>${r.r}<small>${unitShort(ex.unit)}</small></span><button data-act="r+">+</button></div>
       <button class="chk" data-act="log">✓</button></div>`;
-    if(si<n-1 && ex.kind!=="cardio") h+=burstHTML(ex.id,si,false);
+    if(ex.kind!=="cardio"){
+      if(si<n-1) h+=burstHTML(ex.id,si,false);
+      else { const live=AC&&AC.w===cur.w&&AC.d===cur.d&&AC.exId===ex.id&&AC.si===si; if(live||burstRec(ex.id,si)||!isLastVisible(ei)) h+=burstHTML(ex.id,si,false); }
+    }
   });
   return h+`</div></div>`;
 }
@@ -1197,8 +1225,8 @@ function vSys(){
   [0,20,30,45,60].forEach(s=>h+=`<button class="pill ${S.settings.accel===s?"o":"d"}" data-ac="${s}">${s?s+" s":"Off"}</button>`);
   h+=`</div><div class="label" style="margin-top:12px">Get-ready countdown before each burst</div><div class="row" style="margin-top:8px">`;
   [0,3,5,10].forEach(s=>h+=`<button class="pill ${(S.settings.lead===undefined?5:S.settings.lead)===s?"o":"d"}" data-ld="${s}">${s?s+" s":"Off"}</button>`);
-  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.beep?"b":"d"}" id="beepT">Beep: ${S.settings.beep?"On":"Off"}</button></div>
-   <div class="note muted" style="margin-top:6px;font-size:12px">When a burst ends, the screen flashes and your next set lights up. The beep only plays while the app is on screen.</div></div>`;
+  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.beep?"b":"d"}" id="beepT">Beep in silent mode: ${S.settings.beep?"On":"Off"}</button></div>
+   <div class="note muted" style="margin-top:6px;font-size:12px">The beep sounds even when your phone is on silent. Your music may dip or pause for a moment with each beep. It plays while the app is on screen. The screen flash and next-set highlight always happen.</div></div>`;
   h+=`<div class="label" style="margin:16px 2px 6px">Data · ${persisted} · ${S.logs.length} sets · last backup ${S.lastBackup?new Date(S.lastBackup).toLocaleDateString():"never"}</div>`;
   h+=ioBlock("program","Training program","The plan itself: schedule, exercises, briefings, standing orders. Import a new file to start a new program.","var(--orange)");
   h+=ioBlock("logs","Logs","Your workout history only. Imports merge with what's here, and you're asked before anything is overwritten.","var(--lav)");
@@ -1209,7 +1237,7 @@ function vSys(){
   $("#view").innerHTML=h;
   document.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{S.settings.accel=+b.dataset.ac;save();vSys()});
   document.querySelectorAll("[data-ld]").forEach(b=>b.onclick=()=>{S.settings.lead=+b.dataset.ld;save();vSys()});
-  $("#beepT").onclick=()=>{S.settings.beep=!S.settings.beep;save();unlockAudio();if(S.settings.beep)beep(1);vSys()};
+  $("#beepT").onclick=()=>{S.settings.beep=!S.settings.beep;save();audioUnlocked=false;if(S.settings.beep){beep(1);setTimeout(unlockAudio,400)}vSys()};
   document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>doExport(b.dataset.ex,"file"));
   document.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>doExport(b.dataset.cp,"copy"));
   document.querySelectorAll("[data-im]").forEach(i=>i.onchange=e=>readFile(e,t=>importAny(t,i.dataset.im)));
