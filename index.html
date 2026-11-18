@@ -169,6 +169,36 @@ main{min-width:0}
 .filebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .iogrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .iogrid .pill{height:46px;padding:0 8px;font-size:16px;text-align:center}
+.acl.ready{box-shadow:inset 0 0 0 2px var(--gold);background:#1a1406}
+.acl.ready .t{color:var(--gold);font-size:34px;min-width:40px;text-align:center}
+.acl.ready .w b{font-size:20px;font-weight:600;color:var(--peach);text-transform:uppercase;letter-spacing:.04em}
+.acd.ph{color:#4a4a58}.acd.ph i{background:#3a3a46}
+.acd.btw{padding-left:4px;margin:2px 0 4px}
+.warm button.mck{border-left:6px solid var(--sky)}
+.techbtn{background:transparent;color:var(--peri);font-size:12px;letter-spacing:.1em;padding:0;text-decoration:underline;text-underline-offset:3px}
+.bannerbtn{display:block;width:100%;text-align:left;text-transform:none;letter-spacing:normal;color:var(--text)}
+.trow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--dim);font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.trow.on{color:var(--orange)}
+body.flash::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:70;animation:flash .55s ease-in-out 3;box-shadow:inset 0 0 0 10px var(--sky);background:rgba(153,204,255,.12)}
+@keyframes flash{0%,100%{opacity:0}50%{opacity:1}}
+.set.nextup{animation:nextup 1s ease-in-out 3;border-radius:24px}
+@keyframes nextup{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px var(--orange)}}
+.vidbox{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 2px var(--dim)}
+.vidbox.short{aspect-ratio:9/16;max-height:62vh;width:auto;margin:0 auto}
+.vidbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 12px}
+.seg2 button{height:44px;background:var(--dim);color:var(--text);font-size:15px;font-weight:600}
+.seg2 button:first-child{border-radius:22px 0 0 22px}.seg2 button:last-child{border-radius:0 22px 22px 0}
+.seg2 button.on{background:var(--lav);color:#000}
+.drill{width:100%;display:flex;align-items:center;gap:12px;background:var(--dim2);border-radius:0 22px 22px 0;padding:0 14px 0 0;margin-bottom:8px;min-height:64px;text-align:left;text-transform:none;letter-spacing:normal;overflow:hidden}
+.drill .dtag{align-self:stretch;width:54px;display:flex;align-items:center;justify-content:center;text-align:center;color:#000;font-size:15px;font-weight:700;line-height:1.1;flex:none}
+.drill .dmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.drill .dmain b{font-size:19px;font-weight:600;color:var(--peach);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drill .dmain small{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.drill .dstat{font-size:12px;color:var(--muted);text-align:right;line-height:1.4;text-transform:uppercase;letter-spacing:.04em}
+.hist-item.drx{display:block;width:100%;text-align:left;text-transform:none;letter-spacing:normal;color:var(--text)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips span{background:var(--dim);border-radius:12px;padding:3px 10px;font-size:15px;color:var(--text)}
 /* ---------- nav ---------- */
 nav{position:fixed;left:0;right:0;bottom:0;background:#000;padding:8px 8px calc(8px + var(--safe-b));display:grid;grid-template-columns:1.1fr 1.1fr .75fr 1.35fr;gap:6px;z-index:20}
 nav button{height:54px;font-size:14px;padding:0 4px;font-weight:600;border-radius:0}
@@ -253,8 +283,20 @@ function videoFor(ex){
   if(mine) return {url:mine,mine:true};
   return {url:"https://www.youtube.com/results?search_query="+encodeURIComponent(ex.name+" how to #shorts"),mine:false};
 }
-function openHow(id){
-  const ex=exDef(id), steps=HOW[id]||[], v=videoFor(ex);
+function ytInfo(u){
+  try{const x=new URL(u); let id=null, short=false;
+    if(/youtu\.be$/.test(x.hostname)) id=x.pathname.slice(1).split("/")[0];
+    else if(/youtube\.com$/.test(x.hostname.replace(/^www\.|^m\./,""))||/youtube\.com$/.test(x.hostname)){
+      const p=x.pathname.split("/").filter(Boolean);
+      if(p[0]==="shorts"){id=p[1];short=true} else if(p[0]==="embed"||p[0]==="live"){id=p[1]} else id=x.searchParams.get("v");
+    }
+    return id&&/^[\w-]{6,}$/.test(id)?{id,short}:null;
+  }catch(e){return null}
+}
+let vidMuted=true;
+function openHow(id,keepMute){
+  if(!keepMute) vidMuted=true;
+  const ex=exDef(id), steps=HOW[id]||[], v=videoFor(ex), yt=v.mine?ytInfo(v.url):null;
   $("#modal").innerHTML=`<div class="elbow" style="margin-bottom:10px"><div class="cap" style="background:var(--sky)"></div><div class="bar"><div class="seg" style="flex:1;background:var(--sky);border-radius:0 9px 9px 0"></div></div></div>
    <div class="big">${esc(ex.name)}</div>
    <div class="meta">${KIND_LABEL[ex.kind]||""}</div>
@@ -266,18 +308,22 @@ function openHow(id){
      <div class="label" style="color:var(--gold)">Instructor's note</div>
      <div class="note" style="margin-top:6px;font-size:15px">${esc(ex.cue)}</div>
    </div>
-   <a class="pill r" href="${esc(v.url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:#000;font-size:20px;height:56px;line-height:36px;text-transform:uppercase;letter-spacing:.04em">▶ ${v.mine?"Watch my video":"Find a short video"}</a>
-   <div class="note muted" style="font-size:12px;margin:6px 4px 12px">${v.mine?"Your saved link.":"Opens YouTube Shorts results. Find one you like? Copy its link and save it below. Next time this button goes straight to it."} Videos need an internet connection.</div>
+   ${yt?`<div class="vidbox ${yt.short?"short":""}"><iframe id="ytf" src="https://www.youtube-nocookie.com/embed/${yt.id}?autoplay=1&mute=${vidMuted?1:0}&playsinline=1&loop=1&playlist=${yt.id}&rel=0&modestbranding=1" title="${esc(ex.name)} video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+     <div class="row" style="margin:8px 0 4px;justify-content:space-between"><button class="pill ${vidMuted?"d":"s"}" id="vidMute">${vidMuted?"🔇 Muted · tap for sound":"🔊 Sound on · tap to mute"}</button><a class="pill d" href="${esc(v.url)}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);font-size:14px">Open in YouTube</a></div>
+     <div class="note muted" style="font-size:12px;margin:2px 4px 12px">Plays muted so your music keeps going. Needs a connection. If the video doesn't appear (the Claude preview blocks it), use Open in YouTube.</div>`
+   :`<a class="pill r" href="${esc(v.url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:#000;font-size:20px;height:56px;line-height:36px;text-transform:uppercase;letter-spacing:.04em">▶ ${v.mine?"Watch my video":"Find a short video"}</a>
+   <div class="note muted" style="font-size:12px;margin:6px 4px 12px">${v.mine?"Your saved link (this site can't play inside the app).":"Opens YouTube Shorts results. Save a YouTube link below and it will play right here, muted."} Videos need an internet connection.</div>`}
    <div class="panel"><div class="label">My video link</div>
      <input id="vidIn" type="url" inputmode="url" placeholder="Paste a video link" value="${v.mine?esc(v.url):""}" style="width:100%;margin-top:8px;height:46px;border-radius:12px;border:2px solid var(--dim);background:#000;color:var(--text);padding:0 12px;font-size:15px;-webkit-user-select:text;user-select:text">
      <div class="row" style="margin-top:8px"><button class="pill b" id="vidSave">Save link</button>${v.mine?`<button class="pill d" id="vidClear">Clear</button>`:""}</div>
    </div>
    <button class="pill o" id="mClose" style="width:100%;height:56px;font-size:20px;margin-top:6px">Close</button>`;
   $("#modal").classList.add("on"); $("#modal").scrollTop=0;
-  $("#mClose").onclick=()=>$("#modal").classList.remove("on");
+  $("#mClose").onclick=()=>{$("#modal").classList.remove("on"); $("#modal").innerHTML="";};
   $("#vidSave").onclick=()=>{const u=$("#vidIn").value.trim(); if(!/^https?:\/\//i.test(u)){toast("Paste a full link (https://…)");return}
     S.videos=S.videos||{}; S.videos[id]=u; save(); toast("Video saved"); openHow(id)};
   const c=$("#vidClear"); if(c) c.onclick=()=>{delete S.videos[id]; save(); openHow(id)};
+  const vm=$("#vidMute"); if(vm) vm.onclick=()=>{vidMuted=!vidMuted; openHow(id,true)};
 }
 const KIND_LABEL={main:"Main lift",arm:"Arm builder",acc:"Accessory",core:"Core",carry:"Carry",cardio:"Conditioning",care:"Shoulder care"};
 
@@ -299,7 +345,7 @@ function validateProgram(p){
 function applyProgram(p){
   PROG=p; PHASES=p.cycles; TIERS=p.tiers||{}; TIER_STEP=p.tierStep||{}; WEEK_NOTE=p.weekNotes||[]; TECH=p.techniques||[];
   BACK_RULE=p.safetyRule||""; ACCEL_MOVES=(p.burstMoves&&p.burstMoves.length)?p.burstMoves:["Bike — easy spin","Elliptical","Marching in place"];
-  DAYS=p.days.map(d=>({name:d.name,arms:!!d.armDay,warm:d.warmup||[]})); DAY_CODES=p.days.map((d,i)=>d.code||("D"+(i+1)));
+  DAYS=p.days.map(d=>({name:d.name,arms:!!d.armDay,warm:d.warmup||[],cool:d.cooldown||[]})); DAY_CODES=p.days.map((d,i)=>d.code||("D"+(i+1)));
   PLAN=p.plan; EX={}; HOW={};
   for(const id in p.exercises){const e=p.exercises[id]; EX[id]=[e.name,e.kind||"acc",e.load||"none",e.sets||3,e.start||0,e.inc||5,e.fixed||null,e.unit||"reps",e.cue||""]; HOW[id]=e.how||[];}
   S.exNames=S.exNames||{}; for(const id in p.exercises) S.exNames[id]=p.exercises[id].name;
@@ -329,7 +375,7 @@ const key=(w,d)=>w+"-"+d;
 
 /* ---------- storage (localStorage + IndexedDB mirror) ---------- */
 const SKEY="monarch.sizeprotocol.v1";
-let S={v:2,pid:null,program:null,progress:{},logs:[],done:{},skipped:{},drafts:{},clock:{},ptr:{w:1,d:1},settings:{accel:30,vibrate:true},lastBackup:0,created:Date.now()};
+let S={v:2,pid:null,program:null,progress:{},logs:[],done:{},skipped:{},drafts:{},clock:{},mob:{},bursts:{},ptr:{w:1,d:1},settings:{accel:30,vibrate:true,lead:5,beep:true},lastBackup:0,created:Date.now()};
 let memOnly=false;
 function load(){
   try{const raw=localStorage.getItem(SKEY); if(raw){const o=JSON.parse(raw); S=Object.assign(S,o); S.settings=Object.assign({accel:30,vibrate:true},o.settings||{});}}
@@ -349,14 +395,15 @@ function migrate(){
   const hadOld=S.v!==2 && (S.logs.length||Object.keys(S.done||{}).length);
   for(const l of S.logs) if(!l.pid) l.pid=DEFAULT_PID;
   if(hadOld && !S.pid){ S.pid=DEFAULT_PID; S.progress[DEFAULT_PID]={done:S.done||{},skipped:S.skipped||{},drafts:S.drafts||{},clock:S.clock||{},ptr:S.ptr||{w:1,d:1}}; }
-  S.v=2; S.done=S.done||{}; S.skipped=S.skipped||{}; S.drafts=S.drafts||{}; S.clock=S.clock||{}; S.ptr=S.ptr||{w:1,d:1};
+  S.v=2; S.done=S.done||{}; S.skipped=S.skipped||{}; S.drafts=S.drafts||{}; S.clock=S.clock||{}; S.ptr=S.ptr||{w:1,d:1}; S.mob=S.mob||{}; S.bursts=S.bursts||{};
+  S.settings=Object.assign({accel:30,vibrate:true,lead:5,beep:true},S.settings||{});
   if(S.program){ try{validateProgram(S.program); applyProgram(S.program);}catch(e){PROG=null} }
 }
-function stashProgress(){ if(S.pid) S.progress[S.pid]={done:S.done,skipped:S.skipped,drafts:S.drafts,clock:S.clock,ptr:S.ptr}; }
+function stashProgress(){ if(S.pid) S.progress[S.pid]={done:S.done,skipped:S.skipped,drafts:S.drafts,clock:S.clock,ptr:S.ptr,mob:S.mob||{},bursts:S.bursts||{}}; }
 function activateProgram(p){
   validateProgram(p); stashProgress();
   const pr=S.progress[p.id]||{done:{},skipped:{},drafts:{},clock:{},ptr:{w:1,d:1}};
-  S.pid=p.id; S.program=p; S.done=pr.done; S.skipped=pr.skipped; S.drafts=pr.drafts; S.clock=pr.clock||{}; S.ptr=pr.ptr||{w:1,d:1};
+  S.pid=p.id; S.program=p; S.done=pr.done||{}; S.skipped=pr.skipped||{}; S.drafts=pr.drafts||{}; S.clock=pr.clock||{}; S.ptr=pr.ptr||{w:1,d:1}; S.mob=pr.mob||{}; S.bursts=pr.bursts||{};
   applyProgram(p); stashProgress(); cur=null; homeW=null; selD=null; AC=null; save();
 }
 const inP=l=>(l.pid||DEFAULT_PID)===S.pid;
@@ -417,10 +464,11 @@ function buildSession(w,d){
     }
     return {ex,section,rows,sg,rng};
   };
-  cur={w,d,list:[...plan.core.map(i=>mk(i,"core")),...plan.add.map(i=>mk(i,"add"))],warm:(S.drafts[k]&&S.drafts[k]._warm)||[]};
+  cur={w,d,list:[...plan.core.map(i=>mk(i,"core")),...plan.add.map(i=>mk(i,"add"))]};
+  S.mob=S.mob||{}; if(!S.mob[k] && draft && draft._warm && draft._warm.length) S.mob[k]={warm:draft._warm,cool:[]};
 }
 function saveDraft(){
-  if(!cur)return; const k=key(cur.w,cur.d), o={_warm:cur.warm};
+  if(!cur)return; const k=key(cur.w,cur.d), o={};
   cur.list.forEach(it=>{o[it.ex.id]=it.rows.map(r=>({wt:r.wt,r:r.r}))});
   S.drafts[k]=o; save();
 }
@@ -577,24 +625,28 @@ function toggleSkip(w,d){
   else{ S.skipped[k]=true; if(w===S.ptr.w&&d===S.ptr.d) advancePtr(); toast("Marked missed"); }
   save(); selD=null; homeW=S.ptr.w===w?w:homeW; vHome();
 }
-function openSession(w,d){buildSession(w,d);openEx=new Set();warmOpen=null;addOpen=false;VIEW="work";render()}
+function openSession(w,d){buildSession(w,d);openEx=new Set();warmOpen=null;coolOpen=null;addOpen=false;VIEW="work";render()}
 
 /* ---------- session: timeline ---------- */
-let openEx=new Set(), warmOpen=null, AC=null, acIdx=0;
-const acMoves={};
+let openEx=new Set(), warmOpen=null, coolOpen=null, AC=null, acIdx=0, justBurst=false;
 function exComplete(it){return it.rows.every(r=>r.logged)}
-function visibleList(){return cur.list.map((it,ei)=>({it,ei})).filter(x=>x.it.section==="core"||addOpen)}
+function visibleIdx(){return cur.list.map((it,ei)=>ei).filter(ei=>cur.list[ei].section==="core"||addOpen)}
 function activeEi(){
-  if(AC && cur && AC.w===cur.w && AC.d===cur.d && AC.si<cur.list[AC.ei].rows.length-1 && !exComplete(cur.list[AC.ei])) return AC.ei;
-  const f=visibleList().find(x=>!exComplete(x.it)); return f?f.ei:null;
+  if(AC && cur && AC.w===cur.w && AC.d===cur.d){
+    const ei=cur.list.findIndex(it=>it.ex.id===AC.exId);
+    if(ei>=0 && AC.si<cur.list[ei].rows.length-1 && !exComplete(cur.list[ei])) return ei;
+  }
+  const f=visibleIdx().find(ei=>!exComplete(cur.list[ei])); return f===undefined?null:f;
 }
+/* mobility (warm-up / cool-down) ticks: saved per session */
+function mob(){S.mob=S.mob||{}; const k=key(cur.w,cur.d); return S.mob[k]=S.mob[k]||{warm:[],cool:[]}}
+function burstRec(exId,si){const b=(S.bursts||{})[key(cur.w,cur.d)]; return b&&b[exId+"-"+si]}
 function clk(){S.clock=S.clock||{};return S.clock[key(cur.w,cur.d)]}
 function clkElapsed(c){return c?Math.floor((c.acc||0)+(c.run?(Date.now()-c.run)/1000:0)):0}
 function clkStart(){S.clock=S.clock||{};const k=key(cur.w,cur.d),c=S.clock[k]||{acc:0,run:null};if(!c.run)c.run=Date.now();S.clock[k]=c;save()}
 function clkPause(){const c=clk();if(c&&c.run){c.acc=(c.acc||0)+(Date.now()-c.run)/1000;c.run=null;save()}}
-function clkToggle(){const c=clk(); if(c&&c.run) clkPause(); else clkStart(); vWork()}
+function clkToggle(){const c=clk(); if(c&&c.run) clkPause(); else clkStart(); tickUI(); vWork()}
 function paceInfo(){
-  const logs=S.logs.filter(l=>inP(l)&&l.w===cur.w&&l.d===cur.d);
   const coreIds=cur.list.filter(i=>i.section==="core");
   const total=coreIds.reduce((a,i)=>a+i.rows.length,0), done=coreIds.reduce((a,i)=>a+i.rows.filter(r=>r.logged).length,0);
   const c=clk(), el=clkElapsed(c), running=!!(c&&c.run);
@@ -606,30 +658,83 @@ const mmss=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 function railHTML(topC,dot,botC){return `<div class="rail"><i style="height:12px;background:${topC}"></i>${dot}<i style="flex:1;background:${botC}"></i></div>`}
 const DOT=(sz,bg,ring)=>`<b style="width:${sz}px;height:${sz}px;background:${bg};${ring?"box-shadow:inset 0 0 0 4px "+ring+";":""}"></b>`;
 const LINE_DONE="var(--peri)", LINE_TODO="var(--dim)";
+function checklist(items,ticked,attr){
+  return `<div class="warm" style="margin-bottom:8px">`+items.map((t,i)=>`<button ${attr}="${i}" class="${ticked.includes(i)?"on":""}${/mckenzie/i.test(t)?" mck":""}"><i>${ticked.includes(i)?"✓":""}</i>${esc(t)}</button>`).join("")+`</div>`;
+}
+/* burst rows */
+function burstHTML(exId,si,between){
+  if(S.settings.accel<=0) return "";
+  const live=AC && AC.w===cur.w && AC.d===cur.d && AC.exId===exId && AC.si===si;
+  if(live) return liveBurst();
+  const rec=burstRec(exId,si);
+  if(rec) return `<div class="acd${between?" btw":""}"><i></i><span>${esc(rec.label)}</span><span>${mmss(rec.secs)} ✓</span></div>`;
+  return `<div class="acd ph${between?" btw":""}"><i></i><span>Impulse burst</span><span>${S.settings.accel}s</span></div>`;
+}
+function liveBurst(){
+  const now=Date.now();
+  if(AC.phase==="ready"){
+    const left=Math.max(0,Math.ceil(((AC.frozenAt||now)-0>0?(AC.readyEnd-(AC.frozenAt||now)):0)/1000));
+    return `<div class="acl ready"><span class="t" id="acT2">${left}</span><span class="w"><small>GET READY · NEXT</small><b>${esc(AC.label)}</b></span><button class="pill s" id="acGo">Go now</button><button class="pill d" id="acSkip">Skip</button></div>`;
+  }
+  const left=Math.max(0,Math.ceil((AC.end-(AC.frozenAt||now))/1000));
+  return `<div class="acl"><span class="t" id="acT2">${mmss(left)}</span><span class="w"><small>IMPULSE BURST</small>${esc(AC.label)}</span><button class="pill d" id="acPlus2">+15</button><button class="pill s" id="acDone2">Done</button></div>`;
+}
+function startBurst(exId,si){
+  const lead=S.settings.lead===undefined?5:S.settings.lead, dur=S.settings.accel, now=Date.now();
+  const label=ACCEL_MOVES[acIdx++%ACCEL_MOVES.length];
+  AC={w:cur.w,d:cur.d,exId,si,label,dur,phase:lead>0?"ready":"go",readyEnd:now+lead*1000,end:now+(lead+dur)*1000};
+  if(lead<=0) AC.end=now+dur*1000;
+}
+function completeBurst(early){
+  if(!AC) return; const now=Date.now();
+  const secs=early?Math.max(0,Math.round((AC.dur*1000-(AC.end-now))/1000)):AC.dur;
+  S.bursts=S.bursts||{}; const k=key(AC.w,AC.d); S.bursts[k]=S.bursts[k]||{};
+  S.bursts[k][AC.exId+"-"+AC.si]={label:AC.label,secs:Math.min(secs,Math.round((AC.end-AC.readyEnd)/1000)||secs),t:now};
+  AC=null; save(); justBurst=true;
+  alertBurst();
+  if(VIEW==="work") vWork();
+}
+/* alert: flash + optional beep (sound only plays while the app is on screen) */
+let actx=null;
+function unlockAudio(){try{if(!actx){const A=window.AudioContext||window.webkitAudioContext; if(A) actx=new A();} if(actx&&actx.state==="suspended") actx.resume();}catch(e){}}
+document.addEventListener("click",unlockAudio,{passive:true});
+function beep(times){
+  if(!S.settings.beep||!actx) return;
+  try{for(let i=0;i<times;i++){const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*0.22;
+    o.frequency.value=880; o.type="sine"; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+0.18);}}catch(e){}
+}
+function alertBurst(){
+  document.body.classList.remove("flash"); void document.body.offsetWidth; document.body.classList.add("flash");
+  setTimeout(()=>document.body.classList.remove("flash"),1700);
+  beep(2); try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+  toast("Burst complete · next set");
+}
 function vWork(){
   if(!cur) buildSession(S.ptr.w,S.ptr.d);
-  const {w,d}=cur, ph=phaseOf(w), day=DAYS[d-1], wip=wipOf(w);
+  const {w,d}=cur, ph=phaseOf(w), day=DAYS[d-1], wip=wipOf(w), M=mob();
   setTitle(day.name,"W"+w+" · D"+d+" · C"+ph.key);
   const pi=paceInfo(), anyLogged=S.logs.some(l=>inP(l)&&l.w===w&&l.d===d);
-  if(warmOpen===null) warmOpen=!anyLogged && cur.warm.length<day.warm.length;
+  if(warmOpen===null) warmOpen=!anyLogged && M.warm.length<day.warm.length;
+  const coreDone=cur.list.filter(i=>i.section==="core").every(exComplete);
+  if(coolOpen===null) coolOpen=coreDone && M.cool.length<day.cool.length;
   const tech=isDeload(w)?"SHORE LEAVE":techFor(w);
   let h=`<div class="pace"><div class="pbar"><div id="pFill" style="width:${(pi.sf*100).toFixed(1)}%"></div><div id="pMark" style="left:${(pi.tf*100).toFixed(1)}%"></div></div>
-    <div class="prow"><button class="clk ${pi.running?"on":""}" id="clkBtn" aria-label="${pi.running?"Pause":"Start"} session clock">${pi.running?'<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1" fill="#000"/><rect x="14" y="4" width="5" height="16" rx="1" fill="#000"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="#000"/></svg>'}</button><span id="pTime" class="${pi.started&&!pi.running?"blink":""}">${mmss(pi.el)} / ${SESS_MIN}:00</span><span id="pStat" style="color:${pi.status[1]}">${pi.status[0]}</span><span>${pi.done}/${pi.total} SETS · ${tech}</span></div></div>`;
-  if(!anyLogged) h+=`<div class="banner ${isDeload(w)?"blue":""} note"><b>${isDeload(w)?"SHORE LEAVE":"WEEK "+(wip+1)+" OF CYCLE "+ph.key}</b> — ${esc(noteFor(w))}${!isDeload(w)&&BACK_RULE&&/REST|DROP/.test(techFor(w))?"<br><span class='muted'>"+esc(BACK_RULE)+"</span>":""}</div>`;
+    <div class="prow"><button class="clk ${pi.running?"on":""}" id="clkBtn" aria-label="${pi.running?"Pause":"Start"} session clock">${pi.running?'<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1" fill="#000"/><rect x="14" y="4" width="5" height="16" rx="1" fill="#000"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="#000"/></svg>'}</button><span id="pTime" class="${pi.started&&!pi.running?"blink":""}">${mmss(pi.el)} / ${SESS_MIN}:00</span><span id="pStat" style="color:${pi.status[1]}">${pi.status[0]}</span><span>${pi.done}/${pi.total} · <button class="techbtn" id="techBtn">${tech} ›</button></span></div></div>`;
+  if(!anyLogged) h+=`<button class="banner ${isDeload(w)?"blue":""} note bannerbtn" id="techBanner"><b>${isDeload(w)?"SHORE LEAVE":"WEEK "+(wip+1)+" OF CYCLE "+ph.key}</b> — ${esc(noteFor(w))} <span style="color:var(--peri)">Tap for briefing ›</span></button>`;
   h+=`<div class="tline">`;
-  // warm-up node
-  const wDone=cur.warm.length>=day.warm.length;
+  const wDone=M.warm.length>=day.warm.length;
   h+=`<div class="tl">${railHTML("#000",DOT(14,wDone?"#5ec49a":"var(--dim)"),wDone?LINE_DONE:LINE_TODO)}<div class="tlc">
-    <button class="tlrow" id="warmTog"><span class="tn" style="color:${wDone?"var(--muted)":"var(--text)"}">${warmOpen?"▾":"▸"} Pre-flight check</span><span class="tm" style="color:${wDone?"#5ec49a":"var(--muted)"}">${cur.warm.length} / ${day.warm.length}</span></button>`;
-  if(warmOpen){ h+=`<div class="warm" style="margin-bottom:8px">`; day.warm.forEach((t,i)=>{h+=`<button data-wi="${i}" class="${cur.warm.includes(i)?"on":""}"><i>${cur.warm.includes(i)?"✓":""}</i>${esc(t)}</button>`}); h+=`</div>`; }
-  h+=`</div></div>`;
-  const act=activeEi(); let prevDone=wDone;
+    <button class="tlrow" id="warmTog"><span class="tn" style="color:${wDone?"var(--muted)":"var(--text)"}">${warmOpen?"▾":"▸"} Pre-flight check</span><span class="tm" style="color:${wDone?"#5ec49a":"var(--muted)"}">${M.warm.length} / ${day.warm.length}</span></button>
+    ${warmOpen?checklist(day.warm,M.warm,"data-wi"):""}</div></div>`;
+  const act=activeEi(), vis=visibleIdx(); let prevDone=wDone, prevEi=null;
   cur.list.forEach((it,ei)=>{
     if(it.section==="add" && cur.list[ei-1].section==="core"){
-      h+=`<div class="tl">${railHTML(prevDone?LINE_DONE:LINE_TODO,DOT(10,"var(--lav)"),addOpen?LINE_TODO:"#000")}<div class="tlc"><button class="tlrow" id="addTog"><span class="tn" style="color:var(--lav)">${addOpen?"▾":"+"} Secondary drill</span><span class="tm">10 min · ${cur.list.filter(x=>x.section==="add").length} lifts · optional</span></button></div></div>`;
-      if(!addOpen){}
+      if(!addOpen && prevEi!==null){ const bh=burstBetween(prevEi,true); if(bh) h+=bh; prevEi=null; }
+      h+=`<div class="tl">${railHTML(prevDone?LINE_DONE:LINE_TODO,DOT(10,"var(--lav)"),addOpen?LINE_TODO:"#000")}<div class="tlc"><button class="tlrow" id="addTog"><span class="tn" style="color:var(--lav)">${addOpen?"▾":"+"} Secondary drill</span><span class="tm">${PROG.addOnMinutes||10} min · ${cur.list.filter(x=>x.section==="add").length} lifts · optional</span></button></div></div>`;
     }
     if(it.section==="add" && !addOpen) return;
+    if(prevEi!==null) h+=burstBetween(prevEi,false);
     const comp=exComplete(it), isAct=ei===act, expanded=isAct||openEx.has(ei);
     const top=prevDone?LINE_DONE:LINE_TODO, bot=comp?LINE_DONE:LINE_TODO;
     if(expanded){
@@ -638,28 +743,47 @@ function vWork(){
     }else if(comp){
       const res=it.rows.map(r=>(hasWeight(it.ex)?(r.wt||"BW")+"×":"")+r.r+unitShort(it.ex.unit)).join(" · ");
       h+=`<div class="tl">${railHTML(top,DOT(14,"#5ec49a"),bot)}<div class="tlc"><button class="tlrow" data-tog="${ei}"><span class="tn" style="color:var(--muted)">${esc(it.ex.name)}</span><span class="tm" style="color:#5ec49a">${esc(res)}</span></button></div></div>`;
-      if(AC && AC.w===w && AC.d===d && AC.ei===ei) h+=`<div class="tl">${railHTML(LINE_DONE,DOT(10,"var(--sky)"),LINE_DONE)}<div class="tlc">${liveCardio()}</div></div>`;
     }else{
       const wt=hasWeight(it.ex)?" · "+(it.rows[0].wt||"BW")+(it.rows[0].wt?" lb":""):"";
       const some=it.rows.some(r=>r.logged);
       h+=`<div class="tl">${railHTML(top,DOT(12,some?"var(--peach)":"var(--dim)"),bot)}<div class="tlc"><button class="tlrow" data-tog="${ei}"><span class="tn">${esc(it.ex.name)}</span><span class="tm">${it.rows.length} × ${rangeFor(it.ex,w)}${esc(wt)}</span></button></div></div>`;
     }
-    prevDone=comp;
+    prevDone=comp; prevEi=ei;
   });
+  if(prevEi!==null){ const bh=burstBetween(prevEi,true); if(bh) h+=bh; }
+  const cDone=day.cool.length && M.cool.length>=day.cool.length;
+  if(day.cool.length) h+=`<div class="tl">${railHTML(prevDone?LINE_DONE:LINE_TODO,DOT(14,cDone?"#5ec49a":"var(--dim)"),"#000")}<div class="tlc">
+    <button class="tlrow" id="coolTog"><span class="tn" style="color:${cDone?"var(--muted)":"var(--sky)"}">${coolOpen?"▾":"▸"} Cool-down</span><span class="tm" style="color:${cDone?"#5ec49a":"var(--muted)"}">${M.cool.length} / ${day.cool.length}</span></button>
+    ${coolOpen?checklist(day.cool,M.cool,"data-ci"):""}</div></div>`;
   h+=`</div><button class="pill g" id="finish" style="width:100%;height:60px;font-size:22px;margin:14px 0 6px">End drill</button>
     <button class="pill d" id="delDrill" style="display:block;margin:14px auto 8px;color:var(--red);font-size:14px;padding:8px 16px;box-shadow:inset 0 0 0 2px var(--red);background:transparent">Delete drill log</button>`;
   $("#view").innerHTML=h;
   $("#warmTog").onclick=()=>{warmOpen=!warmOpen;vWork()};
+  const ct=$("#coolTog"); if(ct) ct.onclick=()=>{coolOpen=!coolOpen;vWork()};
   $("#clkBtn").onclick=clkToggle;
-  document.querySelectorAll(".warm button").forEach(b=>b.onclick=()=>{const i=+b.dataset.wi;
-    cur.warm=cur.warm.includes(i)?cur.warm.filter(x=>x!==i):[...cur.warm,i]; saveDraft();
-    if(cur.warm.length>=day.warm.length) warmOpen=false; vWork()});
+  $("#techBtn").onclick=openTech; const tb=$("#techBanner"); if(tb) tb.onclick=openTech;
+  document.querySelectorAll("[data-wi]").forEach(b=>b.onclick=()=>{const i=+b.dataset.wi, m=mob();
+    m.warm=m.warm.includes(i)?m.warm.filter(x=>x!==i):[...m.warm,i]; save();
+    if(m.warm.length>=day.warm.length) warmOpen=false; vWork()});
+  document.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const i=+b.dataset.ci, m=mob();
+    m.cool=m.cool.includes(i)?m.cool.filter(x=>x!==i):[...m.cool,i]; save();
+    if(m.cool.length>=day.cool.length) coolOpen=false; vWork()});
   document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const i=+b.dataset.tog; openEx.has(i)?openEx.delete(i):openEx.add(i); vWork()});
   const t=$("#addTog"); if(t) t.onclick=()=>{addOpen=!addOpen;vWork()};
-  const acp=$("#acPlus2"), acd=$("#acDone2");
-  if(acp) acp.onclick=()=>{if(AC){AC.left+=15;tickUI()}};
-  if(acd) acd.onclick=()=>{AC=null;vWork()};
-  bindSets(); $("#finish").onclick=finish; $("#delDrill").onclick=askDeleteDrill;
+  const g=$("#acGo"), sk=$("#acSkip"), p15=$("#acPlus2"), dn=$("#acDone2");
+  if(g) g.onclick=()=>{if(AC){AC.phase="go";AC.end=Date.now()+AC.dur*1000;AC.readyEnd=Date.now();delete AC.frozenAt;vWork()}};
+  if(sk) sk.onclick=()=>{AC=null;vWork()};
+  if(p15) p15.onclick=()=>{if(AC){AC.end+=15000;tickUI()}};
+  if(dn) dn.onclick=()=>completeBurst(true);
+  bindSets(); $("#finish").onclick=finishCheck; $("#delDrill").onclick=askDeleteDrill;
+  if(justBurst){ justBurst=false; const n=document.querySelector("#activeEx .set:not(.logged)"); if(n) n.classList.add("nextup"); }
+}
+function burstBetween(ei,trailing){
+  const it=cur.list[ei], last=it.rows.length-1, exId=it.ex.id;
+  if(it.ex.kind==="cardio"||S.settings.accel<=0) return "";
+  const live=AC && AC.w===cur.w && AC.d===cur.d && AC.exId===exId && AC.si===last, rec=burstRec(exId,last);
+  if(trailing && !live && !rec) return "";
+  return `<div class="tl">${railHTML(LINE_DONE,DOT(10,live?"var(--sky)":rec?"var(--sky)":"var(--dim)"),LINE_DONE)}<div class="tlc">${burstHTML(exId,last,true)}</div></div>`;
 }
 function unitShort(u){return u==="reps"?"":u==="reps/side"?"/side":u==="sec"?"s":u==="sec/side"?"s/side":u==="rounds"?"rds":""}
 function exCard(it,ei,collapsible){
@@ -677,19 +801,9 @@ function exCard(it,ei,collapsible){
       <button class="wbtn ${hasWeight(ex)?"":"na"}" data-act="w">${wtxt}${hasWeight(ex)&&r.wt>0?"<small>LB</small>":""}</button>
       <div class="step"><button data-act="r-">−</button><span>${r.r}<small>${unitShort(ex.unit)}</small></span><button data-act="r+">+</button></div>
       <button class="chk" data-act="log">✓</button></div>`;
-    h+=cardioRow(it,ei,si);
+    if(si<n-1 && ex.kind!=="cardio") h+=burstHTML(ex.id,si,false);
   });
   return h+`</div></div>`;
-}
-function liveCardio(){return `<div class="acl"><span class="t" id="acT2">${mmss(Math.max(0,AC.left))}</span><span class="w"><small>IMPULSE BURST</small>${esc(AC.label)}</span><button class="pill d" id="acPlus2">+15</button><button class="pill s" id="acDone2">Done</button></div>`}
-function cardioRow(it,ei,si){
-  if(!it.rows[si].logged || it.ex.kind==="cardio") return "";
-  const live=AC && AC.w===cur.w && AC.d===cur.d && AC.ei===ei && AC.si===si;
-  const lbl=acMoves[key(cur.w,cur.d)+"-"+ei+"-"+si];
-  if(live && si<it.rows.length-1) return liveCardio();
-  if(live) return "";
-  if(si<it.rows.length-1 && it.rows[si+1].logged && lbl) return `<div class="acd"><i></i><span>${esc(lbl)}</span><span>✓</span></div>`;
-  return "";
 }
 function bindSets(){
   document.querySelectorAll("[data-how]").forEach(b=>b.onclick=e=>{e.stopPropagation();openHow(b.dataset.how)});
@@ -713,32 +827,42 @@ function toggleLog(ei,si){
   const it=cur.list[ei], r=it.rows[si];
   if(r.logged){
     S.logs=S.logs.filter(l=>!(inP(l)&&l.w===cur.w&&l.d===cur.d&&l.ex===it.ex.id&&l.s===si)); r.logged=false;
-    if(AC&&AC.ei===ei&&AC.si===si) AC=null;
+    if(AC&&AC.exId===it.ex.id&&AC.si===si) AC=null;
+    const b=(S.bursts||{})[key(cur.w,cur.d)]; if(b) delete b[it.ex.id+"-"+si];
   }else{
     { const c=clk(); if(!c||!c.run) clkStart(); }
     S.logs.push({pid:S.pid,w:cur.w,d:cur.d,ex:it.ex.id,s:si,wt:hasWeight(it.ex)?r.wt:null,r:r.r,t:Date.now(),day:new Date().toISOString().slice(0,10)});
     r.logged=true;
     for(let j=si+1;j<it.rows.length;j++){ if(!it.rows[j].logged){ it.rows[j].r=r.r; if(hasWeight(it.ex)) it.rows[j].wt=r.wt; } }
-    if(S.settings.vibrate) try{navigator.vibrate&&navigator.vibrate(25)}catch(e){}
-    if(S.settings.accel>0 && it.ex.kind!=="cardio"){
-      const label=ACCEL_MOVES[acIdx++%ACCEL_MOVES.length];
-      AC={w:cur.w,d:cur.d,ei,si,left:S.settings.accel,label}; acMoves[key(cur.w,cur.d)+"-"+ei+"-"+si]=label;
-    }
+    if(AC) completeBurstSilently();
+    if(S.settings.accel>0 && it.ex.kind!=="cardio") startBurst(it.ex.id,si);
     if(exComplete(it)) openEx.delete(ei);
+    if(cur.list.filter(i=>i.section==="core").every(exComplete)) coolOpen=null;
   }
   save(); saveDraft(); vWork(); revealActive();
+}
+function completeBurstSilently(){ // logging the next set before a burst ends counts the burst as done
+  if(!AC) return; const now=Date.now(); S.bursts=S.bursts||{}; const k=key(AC.w,AC.d); S.bursts[k]=S.bursts[k]||{};
+  const secs=AC.phase==="go"?Math.max(0,Math.round((AC.dur*1000-(AC.end-now))/1000)):0;
+  if(secs>0) S.bursts[k][AC.exId+"-"+AC.si]={label:AC.label,secs,t:now};
+  AC=null;
 }
 function revealActive(){
   const a=$("#activeEx"); if(!a) return; const r=a.getBoundingClientRect();
   if(r.top<0 || r.top>window.innerHeight*0.55) a.scrollIntoView({block:"start",behavior:"smooth"});
 }
-/* live ticker: pace + cardio countdown */
+/* live ticker: pace + burst countdown (end-time based, so it stays correct after switching apps) */
 function tickUI(){
-  const acPaused=AC && S.clock && S.clock[key(AC.w,AC.d)] && !S.clock[key(AC.w,AC.d)].run;
-  if(AC && !acPaused){
-    AC.left--;
-    if(AC.left<0){ AC=null; if(S.settings.vibrate) try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){} toast("Burst complete · next set"); if(VIEW==="work") vWork(); return }
-    const t=$("#acT2"); if(t) t.textContent=mmss(AC.left);
+  if(AC){
+    const now=Date.now(), c=S.clock&&S.clock[key(AC.w,AC.d)], paused=c&&!c.run;
+    if(paused){ if(!AC.frozenAt) AC.frozenAt=now; }
+    else if(AC.frozenAt){ const dt=now-AC.frozenAt; AC.readyEnd+=dt; AC.end+=dt; delete AC.frozenAt; }
+    if(!paused){
+      if(AC.phase==="ready" && now>=AC.readyEnd){ AC.phase="go"; beep(1); if(VIEW==="work") vWork(); }
+      else if(AC.phase==="go" && now>=AC.end){ completeBurst(false); return; }
+    }
+    const t=$("#acT2");
+    if(t && AC){ t.textContent=AC.phase==="ready"?Math.max(0,Math.ceil((AC.readyEnd-(AC.frozenAt||now))/1000)):mmss(Math.max(0,Math.ceil((AC.end-(AC.frozenAt||now))/1000))); }
   }
   if(VIEW==="work" && cur){
     const pi=paceInfo(), pt=$("#pTime"), ps=$("#pStat"), pm=$("#pMark");
@@ -747,8 +871,34 @@ function tickUI(){
     if(pm) pm.style.left=(pi.tf*100).toFixed(1)+"%";
   }
 }
-setInterval(tickUI,1000);
+setInterval(tickUI,500);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) tickUI(); });
 function stopAccel(){AC=null}
+/* technique briefing */
+function openTech(){
+  const w=cur.w, tech=isDeload(w)?"SHORE LEAVE":techFor(w), tb=(PROG.techniqueBriefs||{}), b=tb[tech];
+  const ph=phaseOf(w), len=ph.weeks[1]-ph.weeks[0]+1;
+  let sched="";
+  for(let i=0;i<len;i++){ const ww=ph.weeks[0]+i, t=isDeload(ww)?"SHORE LEAVE":techFor(ww);
+    sched+=`<div class="trow ${ww===w?"on":""}"><span>Week ${i+1}${ww===w?" · now":""}</span><span>${esc((tb[t]&&tb[t].title)||t)}</span></div>`; }
+  $("#modal").innerHTML=`<div class="elbow" style="margin-bottom:10px"><div class="cap" style="background:var(--peri)"></div><div class="bar"><div class="seg" style="flex:1;background:var(--peri);border-radius:0 9px 9px 0"></div></div></div>
+   <div class="label">Briefing · week ${wipOf(w)+1} of cycle ${ph.key}</div>
+   <div class="big">${esc((b&&b.title)||tech)}</div>
+   ${b?`<div class="panel" style="border-left:10px solid var(--peri);margin-top:12px"><div class="label">How</div><ol class="note" style="margin:8px 0 0;padding-left:20px;font-size:16px;line-height:1.45">${b.steps.map(s=>`<li style="margin-bottom:6px">${esc(s)}</li>`).join("")}</ol></div>`:`<div class="note" style="margin:12px 0">${esc(noteFor(w))}</div>`}
+   ${(PROG.techniqueRules||[]).length?`<div class="panel" style="border-left:10px solid var(--gold)"><div class="label" style="color:var(--gold)">Rules</div><div class="note" style="margin-top:6px;line-height:1.5">${PROG.techniqueRules.map(x=>"• "+esc(x)).join("<br>")}</div></div>`:""}
+   <div class="panel"><div class="label">This cycle</div><div style="margin-top:6px">${sched}</div></div>
+   <button class="pill o" id="mClose" style="width:100%;height:56px;font-size:20px;margin-top:6px">Close</button>`;
+  $("#modal").classList.add("on"); $("#modal").scrollTop=0;
+  $("#mClose").onclick=()=>$("#modal").classList.remove("on");
+}
+function finishCheck(){
+  const day=DAYS[cur.d-1], M=mob(), req=day.cool.map((t,i)=>/mckenzie/i.test(t)?i:-1).filter(i=>i>=0);
+  if(req.length && !req.every(i=>M.cool.includes(i)) && S.logs.some(l=>inP(l)&&l.w===cur.w&&l.d===cur.d)){
+    coolOpen=true; vWork();
+    return askConfirm("Post-drill McKenzie not logged","Your cool-down McKenzie press-ups aren't ticked yet. Do them now and tick them off, or end the drill anyway.","End drill anyway",finish);
+  }
+  finish();
+}
 
 /* ---------- weight sheet ---------- */
 let SH=null, applyAll=true;
@@ -807,7 +957,7 @@ function finish(){
      ${sickbayLines(arms)}</div></div>`:""}
    <button class="pill o" id="mClose" style="width:100%;height:56px;font-size:20px;margin-top:10px">Acknowledge</button>`;
   $("#modal").classList.add("on");
-  $("#mClose").onclick=()=>{$("#modal").classList.remove("on");cur=null;homeW=null;selD=null;openEx=new Set();warmOpen=null;addOpen=false;go("home")};
+  $("#mClose").onclick=()=>{$("#modal").classList.remove("on");cur=null;homeW=null;selD=null;openEx=new Set();warmOpen=null;coolOpen=null;addOpen=false;go("home")};
 }
 
 function sickbayLines(arms){
@@ -818,7 +968,7 @@ function askDeleteDrill(){
   const {w,d}=cur, k=key(w,d), n=S.logs.filter(l=>inP(l)&&l.w===w&&l.d===d).length;
   $("#modal").innerHTML=`<div class="elbow" style="margin-bottom:10px"><div class="cap" style="background:var(--red)"></div><div class="bar"><div class="seg" style="flex:1;background:var(--red);border-radius:0 9px 9px 0"></div></div></div>
    <div class="big" style="color:var(--red)">Delete drill log?</div>
-   <div class="note" style="margin:12px 0 14px;font-size:16px;line-height:1.45"><b>W${w} · D${d} · ${esc(DAYS[d-1].name)}</b>: ${n} logged set${n===1?"":"s"}.<br><br>This removes that day's sets, clock time and drafts, and clears its complete or missed status. Other days, other history and the program aren't touched. This can't be undone.</div>
+   <div class="note" style="margin:12px 0 14px;font-size:16px;line-height:1.45"><b>W${w} · D${d} · ${esc(DAYS[d-1].name)}</b>: ${n} logged set${n===1?"":"s"}.<br><br>This removes that day's sets, bursts, warm-up and cool-down ticks, clock time and drafts, and clears its complete or missed status. Other days, other history and the program aren't touched. This can't be undone.</div>
    <label class="label" for="delIn">Type DELETE to confirm</label>
    <input id="delIn" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;margin:8px 0 14px;height:52px;border-radius:12px;border:2px solid var(--red);background:#000;color:var(--text);padding:0 14px;font-size:20px;letter-spacing:.12em;-webkit-user-select:text;user-select:text">
    <button class="pill r" id="delOk" disabled style="width:100%;height:56px;font-size:20px;opacity:.35">Delete</button>
@@ -829,33 +979,84 @@ function askDeleteDrill(){
   $("#delNo").onclick=()=>$("#modal").classList.remove("on");
   ok.onclick=()=>{ if(inp.value.trim().toUpperCase()!=="DELETE") return;
     S.logs=S.logs.filter(l=>!(inP(l)&&l.w===w&&l.d===d));
-    delete S.done[k]; if(S.skipped) delete S.skipped[k]; delete S.drafts[k]; if(S.clock) delete S.clock[k];
+    delete S.done[k]; if(S.skipped) delete S.skipped[k]; delete S.drafts[k]; if(S.clock) delete S.clock[k]; if(S.mob) delete S.mob[k]; if(S.bursts) delete S.bursts[k];
     if(AC&&AC.w===w&&AC.d===d) AC=null;
     if(sIdx(w,d)<sIdx(S.ptr.w,S.ptr.d)) S.ptr={w,d};
     save(); $("#modal").classList.remove("on");
-    buildSession(w,d); openEx=new Set(); warmOpen=null; addOpen=false;
+    buildSession(w,d); openEx=new Set(); warmOpen=null; coolOpen=null; addOpen=false;
     toast("Drill log deleted · "+n+" set"+(n===1?"":"s")); vWork(); window.scrollTo(0,0);
   };
 }
-/* ---------- records ---------- */
-let openHist=null;
+/* ---------- logs: by drill / by exercise ---------- */
+let openHist=null, logMode="drill", logDrill=null;
+function drillList(){
+  const m={};
+  for(const l of S.logs){ const pid=l.pid||DEFAULT_PID, k=pid+"|"+l.w+"-"+l.d;
+    const g=m[k]=m[k]||{k,pid,w:l.w,d:l.d,logs:[],t:0,first:Infinity};
+    g.logs.push(l); g.t=Math.max(g.t,l.t); g.first=Math.min(g.first,l.t); }
+  return Object.values(m).sort((a,b)=>b.t-a.t);
+}
+function progFor(pid){ if(pid===S.pid){stashProgress();} return (S.progress||{})[pid]||{}; }
+function dayName(pid,d){ return pid===S.pid&&DAYS[d-1]?DAYS[d-1].name:"Day "+d; }
 function vLog(){
   setTitle("Logs",S.logs.length+" sets logged");
-  const ids=[...new Set(S.logs.slice().sort((a,b)=>b.t-a.t).map(l=>l.ex))];
-  if(!ids.length){$("#view").innerHTML=`<div class="panel note">No sets logged yet. Your history and progress charts will appear here.</div>`;return}
-  let h="";
+  if(!S.logs.length){$("#view").innerHTML=`<div class="panel note">No sets logged yet. Your drills and progress charts will appear here.</div>`;return}
+  let h=`<div class="seg2"><button class="${logMode==="drill"?"on":""}" data-lm="drill">By drill</button><button class="${logMode==="exercise"?"on":""}" data-lm="exercise">By exercise</button></div>`;
+  if(logMode==="drill") h+= logDrill?drillDetail(logDrill):drillIndex();
+  else h+=exerciseHistory();
+  $("#view").innerHTML=h;
+  document.querySelectorAll("[data-lm]").forEach(b=>b.onclick=()=>{logMode=b.dataset.lm; logDrill=null; vLog()});
+  document.querySelectorAll("[data-dr]").forEach(b=>b.onclick=()=>{logDrill=b.dataset.dr; vLog(); window.scrollTo(0,0)});
+  const bk=$("#drBack"); if(bk) bk.onclick=()=>{logDrill=null; vLog()};
+  document.querySelectorAll("[data-gx]").forEach(b=>b.onclick=()=>{logMode="exercise"; openHist=b.dataset.gx; logDrill=null; vLog();
+    const el=document.querySelector(`.hist-item[data-id="${openHist}"]`); if(el) el.scrollIntoView({block:"start"});});
+  document.querySelectorAll(".hist-item:not(.drx)").forEach(e=>e.onclick=()=>{openHist=openHist===e.dataset.id?null:e.dataset.id;vLog()});
+  if(logMode==="exercise" && openHist) drawChart(openHist);
+}
+function drillIndex(){
+  const L=drillList(); let h="";
+  L.forEach(g=>{
+    const pr=progFor(g.pid), k=g.w+"-"+g.d, done=pr.done&&pr.done[k], secs=pr.clock&&pr.clock[k]?Math.floor((pr.clock[k].acc||0)+(pr.clock[k].run?(Date.now()-pr.clock[k].run)/1000:0)):0;
+    const vol=g.logs.reduce((a,l)=>a+(l.wt||0)*l.r,0), date=new Date(g.first).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+    const lifts=new Set(g.logs.map(l=>l.ex)).size;
+    h+=`<button class="drill" data-dr="${esc(g.k)}"><span class="dtag" style="background:${done?"var(--peri)":"var(--peach)"}">W${g.w}<br>D${g.d}</span>
+      <span class="dmain"><b>${esc(dayName(g.pid,g.d))}</b><small>${esc(date)}${g.pid!==S.pid?" · "+esc(g.pid):""}</small></span>
+      <span class="dstat">${g.logs.length} sets · ${lifts} lifts<br>${vol.toLocaleString()} lb${secs?" · "+mmss(secs):""}${done?"":" · open"}</span></button>`;
+  });
+  return h;
+}
+function drillDetail(k){
+  const g=drillList().find(x=>x.k===k); if(!g) return `<div class="panel note">That drill no longer exists.</div>`;
+  const pr=progFor(g.pid), dk=g.w+"-"+g.d, M=(pr.mob||{})[dk]||{warm:[],cool:[]}, B=(pr.bursts||{})[dk]||{};
+  const day=g.pid===S.pid?DAYS[g.d-1]:null, secs=pr.clock&&pr.clock[dk]?Math.floor(pr.clock[dk].acc||0):0;
+  const vol=g.logs.reduce((a,l)=>a+(l.wt||0)*l.r,0), date=new Date(g.first).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+  const order=[]; g.logs.slice().sort((a,b)=>a.t-b.t).forEach(l=>{ if(!order.includes(l.ex)) order.push(l.ex) });
+  let h=`<button class="pill d" id="drBack" style="margin-bottom:10px">‹ All drills</button>
+   <div class="panel" style="border-left:10px solid ${pr.done&&pr.done[dk]?"var(--peri)":"var(--peach)"}">
+    <div class="label">W${g.w} · D${g.d} · ${esc(date)}</div><div class="big" style="font-size:26px">${esc(dayName(g.pid,g.d))}</div>
+    <div class="meta">${g.logs.length} sets · ${vol.toLocaleString()} lb${secs?" · "+mmss(secs):""} · ${Object.keys(B).length} bursts</div>
+    ${day?`<div class="note muted" style="margin-top:6px">Pre-flight ${M.warm.length}/${day.warm.length} · Cool-down ${M.cool.length}/${day.cool.length}${day.cool.length&&day.cool.some((t,i)=>/mckenzie/i.test(t)&&M.cool.includes(i))?" · McKenzie ✓":""}</div>`:""}
+   </div>`;
+  order.forEach(id=>{
+    const ex=exDef(id), sets=g.logs.filter(l=>l.ex===id).sort((a,b)=>a.s-b.s);
+    h+=`<button class="hist-item drx" data-gx="${id}" style="border-left-color:${KIND_COLOR[ex.kind]}"><h4>${esc(ex.name)} ›</h4>
+      <div class="chips">${sets.map(s=>`<span>${hasWeight(ex)?(s.wt||"BW")+"×":""}${s.r}${unitShort(ex.unit)}</span>`).join("")}</div></button>`;
+  });
+  return h+`<div class="note muted" style="font-size:12px;margin:4px 2px 12px">Tap a lift to open its full history.</div>`;
+}
+function exerciseHistory(){
+  const ids=[...new Set(S.logs.slice().sort((a,b)=>b.t-a.t).map(l=>l.ex))]; let h="";
   ids.forEach(id=>{
     const ex=exDef(id), ses=sessionsFor(id), best=Math.max(...S.logs.filter(l=>l.ex===id).map(l=>l.wt||0));
     h+=`<div class="hist-item" data-id="${id}" style="border-left-color:${KIND_COLOR[ex.kind]}"><h4>${esc(ex.name)}</h4>
       <div class="meta">${ses.length} session${ses.length>1?"s":""}${hasWeight(ex)?" · best "+(best||"BW"):""}</div>
-      <div class="cue">Last (W${ses[0].w}): ${ses[0].sets.sort((a,b)=>a.s-b.s).map(s=>(hasWeight(ex)?(s.wt||"BW")+"×":"")+s.r).join(", ")}</div>
-      ${openHist===id?`<canvas id="cv"></canvas>`+ses.slice(0,12).map(s=>`<div class="cue">${s.sets[0].day} · W${s.w}: ${s.sets.sort((a,b)=>a.s-b.s).map(x=>(hasWeight(ex)?(x.wt||"BW")+"×":"")+x.r).join(", ")}</div>`).join(""):""}
+      <div class="cue">Last (W${ses[0].w}): ${ses[0].sets.slice().sort((a,b)=>a.s-b.s).map(s=>(hasWeight(ex)?(s.wt||"BW")+"×":"")+s.r).join(", ")}</div>
+      ${openHist===id?`<canvas id="cv"></canvas>`+ses.slice(0,12).map(s=>`<div class="cue">${s.sets[0].day} · W${s.w}: ${s.sets.slice().sort((a,b)=>a.s-b.s).map(x=>(hasWeight(ex)?(x.wt||"BW")+"×":"")+x.r).join(", ")}</div>`).join(""):""}
     </div>`;
   });
-  $("#view").innerHTML=h;
-  document.querySelectorAll(".hist-item").forEach(e=>e.onclick=()=>{openHist=openHist===e.dataset.id?null:e.dataset.id;vLog()});
-  if(openHist) drawChart(openHist);
+  return h;
 }
+
 function drawChart(id){
   const cv=$("#cv"); if(!cv)return; const ex=exDef(id);
   const ses=sessionsFor(id).reverse();
@@ -956,8 +1157,9 @@ function importLogs(o){
     stashProgress();
     for(const pid in (o.progress||{})){const src=o.progress[pid], dst=S.progress[pid]=S.progress[pid]||{done:{},skipped:{},drafts:{},clock:{},ptr:{w:1,d:1}};
       dst.done=Object.assign({},src.done||{},dst.done||{}); dst.skipped=Object.assign({},src.skipped||{},dst.skipped||{});
+      dst.mob=Object.assign({},src.mob||{},dst.mob||{}); dst.bursts=Object.assign({},src.bursts||{},dst.bursts||{}); dst.clock=Object.assign({},src.clock||{},dst.clock||{});
       if(src.ptr && (!dst.ptr || (src.ptr.w*100+src.ptr.d)>(dst.ptr.w*100+dst.ptr.d))) dst.ptr=src.ptr; }
-    if(S.pid&&S.progress[S.pid]){const pr=S.progress[S.pid]; S.done=pr.done; S.skipped=pr.skipped; S.ptr=pr.ptr;}
+    if(S.pid&&S.progress[S.pid]){const pr=S.progress[S.pid]; S.done=pr.done; S.skipped=pr.skipped; S.ptr=pr.ptr; S.mob=pr.mob||{}; S.bursts=pr.bursts||{}; S.clock=pr.clock||{};}
     if(o.videos) S.videos=Object.assign({},o.videos,S.videos||{});
     save(); cur=null; toast("Logs merged · "+added+" added"+(overwrite&&differ?" · "+differ+" updated":"")); vSys();
   };
@@ -993,7 +1195,10 @@ function vSys(){
   }
   h+=`<div class="panel"><div class="label">Impulse burst between sets</div><div class="row" style="margin-top:8px">`;
   [0,20,30,45,60].forEach(s=>h+=`<button class="pill ${S.settings.accel===s?"o":"d"}" data-ac="${s}">${s?s+" s":"Off"}</button>`);
-  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.vibrate?"b":"d"}" id="vib">Vibrate: ${S.settings.vibrate?"On":"Off"}</button></div></div>`;
+  h+=`</div><div class="label" style="margin-top:12px">Get-ready countdown before each burst</div><div class="row" style="margin-top:8px">`;
+  [0,3,5,10].forEach(s=>h+=`<button class="pill ${(S.settings.lead===undefined?5:S.settings.lead)===s?"o":"d"}" data-ld="${s}">${s?s+" s":"Off"}</button>`);
+  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.beep?"b":"d"}" id="beepT">Beep: ${S.settings.beep?"On":"Off"}</button></div>
+   <div class="note muted" style="margin-top:6px;font-size:12px">When a burst ends, the screen flashes and your next set lights up. The beep only plays while the app is on screen.</div></div>`;
   h+=`<div class="label" style="margin:16px 2px 6px">Data · ${persisted} · ${S.logs.length} sets · last backup ${S.lastBackup?new Date(S.lastBackup).toLocaleDateString():"never"}</div>`;
   h+=ioBlock("program","Training program","The plan itself: schedule, exercises, briefings, standing orders. Import a new file to start a new program.","var(--orange)");
   h+=ioBlock("logs","Logs","Your workout history only. Imports merge with what's here, and you're asked before anything is overwritten.","var(--lav)");
@@ -1003,20 +1208,21 @@ function vSys(){
    <button class="pill r" id="wipe" style="margin-top:8px">Erase all data</button></div>${CREDIT}`;
   $("#view").innerHTML=h;
   document.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{S.settings.accel=+b.dataset.ac;save();vSys()});
-  $("#vib").onclick=()=>{S.settings.vibrate=!S.settings.vibrate;save();vSys()};
+  document.querySelectorAll("[data-ld]").forEach(b=>b.onclick=()=>{S.settings.lead=+b.dataset.ld;save();vSys()});
+  $("#beepT").onclick=()=>{S.settings.beep=!S.settings.beep;save();unlockAudio();if(S.settings.beep)beep(1);vSys()};
   document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>doExport(b.dataset.ex,"file"));
   document.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>doExport(b.dataset.cp,"copy"));
   document.querySelectorAll("[data-im]").forEach(i=>i.onchange=e=>readFile(e,t=>importAny(t,i.dataset.im)));
   document.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{ioKind=b.dataset.pt; const t=$("#ioTxt"); t.value=""; t.placeholder="Paste "+ioKind+" text here"; t.classList.remove("hidden"); $("#ioGo").classList.remove("hidden"); t.scrollIntoView({block:"center"}); t.focus()});
   $("#ioGo").onclick=()=>importAny($("#ioTxt").value,ioKind);
   let armed=false; $("#wipe").onclick=e=>{ if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
-    const keep=S.settings; S={v:2,pid:null,program:null,progress:{},logs:[],done:{},skipped:{},drafts:{},clock:{},ptr:{w:1,d:1},settings:keep,lastBackup:0,created:Date.now()};
+    const keep=S.settings; S={v:2,pid:null,program:null,progress:{},logs:[],done:{},skipped:{},drafts:{},clock:{},mob:{},bursts:{},ptr:{w:1,d:1},settings:keep,lastBackup:0,created:Date.now()};
     PROG=null; save(); cur=null; homeW=null; selD=null; toast("Erased"); vSys()};
 }
 
 /* ---------- misc ---------- */
 let tT=null; function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),1800)}
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.v==="work"&&!cur&&PROG){ buildSession(S.ptr.w,S.ptr.d); openEx=new Set(); warmOpen=null; addOpen=false; } if(b.dataset.v==="home"){ selD=null; } go(b.dataset.v)});
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.v==="work"&&!cur&&PROG){ buildSession(S.ptr.w,S.ptr.d); openEx=new Set(); warmOpen=null; coolOpen=null; addOpen=false; } if(b.dataset.v==="home"){ selD=null; } go(b.dataset.v)});
 load(); idbOpen(); render();
 /* offline support when served over https (GitHub Pages etc.) */
 try{ if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{}) }catch(e){}
