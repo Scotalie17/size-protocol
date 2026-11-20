@@ -6,8 +6,10 @@ Application created by S. Scott Larsen · MONOC Engineering
 
 ## Features
 
+- **Home:** a landing page with who's signed in, a theme picture, your programs (Continue resumes an active workout, otherwise starts today's), New program (Upload works now; Build and Browse are marked Soon), All logs and Settings. Tabs stay hidden until you open a program.
+- **Themes:** MONOC (default), Starship, Mission Control, Blueprint and Spy, chosen in Settings → Appearance. Each theme has its own words for the main actions. Your choice is kept until you change it or reset settings.
 - **Command:** a status ring for weeks and days (complete, in progress, on duty, missed, scheduled), plus the selected day's targets and Engage.
-- **Training:** a timeline session view with a pace clock (start/pause), one-tap set logging, 5-lb weight dial, rep steppers, and inline "impulse burst" cardio timers.
+- **Training:** a timeline session view with a pace clock (start/pause), one-tap set logging, 5-lb weight dial, rep steppers, and inline cardio burst timers. Warm-up and cool-down moves each have an **i** button that opens a Brief.
 - **Logs:** per-exercise history with progress charts.
 - **Engineering:** import and export for the **program**, the **logs**, or **everything**. Log imports merge and ask before overwriting anything. Every export can be saved as a file or copied as text.
 - Works fully offline after the first load (service worker). Data lives in localStorage with an IndexedDB mirror.
