@@ -1,5 +1,5 @@
 // Offline cache for Size Protocol. Bump VERSION whenever any app file changes.
-const VERSION = "sp-v11";
+const VERSION = "sp-v12";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 

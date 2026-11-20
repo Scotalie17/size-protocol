@@ -184,7 +184,7 @@ body.flash::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:
 .set.nextup{animation:nextup 1s ease-in-out 3;border-radius:24px}
 @keyframes nextup{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px var(--orange)}}
 .vidbox{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 2px var(--dim)}
-.vidbox.short{aspect-ratio:9/16;max-height:62vh;width:auto;margin:0 auto}
+.vidbox.short{aspect-ratio:9/16;max-height:52vh;width:auto;margin:0 auto}
 .vidbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 12px}
 .seg2 button{height:44px;background:var(--dim);color:var(--text);font-size:15px;font-weight:600}
@@ -201,6 +201,8 @@ body.flash::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:
 .chips span{background:var(--dim);border-radius:12px;padding:3px 10px;font-size:15px;color:var(--text)}
 .undr .acd{padding-left:4px;margin:-4px 0 6px}
 .undr .acl{margin:0 0 8px}
+.bhead{position:sticky;top:calc(-20px - var(--safe-t));z-index:5;background:#000;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 0 10px;margin:-8px 0 4px;border-bottom:3px solid var(--sky)}
+.bhead .pill{flex:none;padding:8px 14px;font-size:14px}
 /* ---------- nav ---------- */
 nav{position:fixed;left:0;right:0;bottom:0;background:#000;padding:8px 8px calc(8px + var(--safe-b));display:grid;grid-template-columns:1.1fr 1.1fr .75fr 1.35fr;gap:6px;z-index:20}
 nav button{height:54px;font-size:14px;padding:0 4px;font-weight:600;border-radius:0}
@@ -280,10 +282,12 @@ const LOAD={db:"lb / hand",bb:"lb total",hex:"lb total",lm:"lb added",bw:"added 
 const KIND_COLOR={main:"var(--orange)",arm:"var(--lav)",acc:"var(--peach)",core:"var(--sky)",carry:"var(--gold)",cardio:"var(--red)",care:"#5ec49a"};
 
 /* ---------- how-to (original instructions) ---------- */
-function videoFor(ex){
+const searchUrl=ex=>"https://www.youtube.com/results?search_query="+encodeURIComponent(ex.name+" how to #shorts");
+function videoFor(ex){ // your saved link > program's demo > search
   const mine=(S.videos||{})[ex.id];
-  if(mine) return {url:mine,mine:true};
-  return {url:"https://www.youtube.com/results?search_query="+encodeURIComponent(ex.name+" how to #shorts"),mine:false};
+  if(mine) return {url:mine,src:"mine"};
+  if(VID[ex.id]) return {url:VID[ex.id],src:"program"};
+  return {url:searchUrl(ex),src:"search"};
 }
 function ytInfo(u){
   try{const x=new URL(u); let id=null, short=false;
@@ -298,10 +302,14 @@ function ytInfo(u){
 let vidMuted=true;
 function openHow(id,keepMute){
   if(!keepMute) vidMuted=true;
-  const ex=exDef(id), steps=HOW[id]||[], v=videoFor(ex), yt=v.mine?ytInfo(v.url):null;
-  $("#modal").innerHTML=`<div class="elbow" style="margin-bottom:10px"><div class="cap" style="background:var(--sky)"></div><div class="bar"><div class="seg" style="flex:1;background:var(--sky);border-radius:0 9px 9px 0"></div></div></div>
-   <div class="big">${esc(ex.name)}</div>
-   <div class="meta">${KIND_LABEL[ex.kind]||""}</div>
+  const ex=exDef(id), steps=HOW[id]||[], v=videoFor(ex), yt=v.src!=="search"?ytInfo(v.url):null;
+  const vidHTML=yt?`<div class="vidbox ${yt.short?"short":""}"><iframe id="ytf" src="https://www.youtube-nocookie.com/embed/${yt.id}?autoplay=1&mute=${vidMuted?1:0}&playsinline=1&loop=1&playlist=${yt.id}&rel=0&modestbranding=1" title="${esc(ex.name)} video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+     <div class="row" style="margin:8px 0 4px;justify-content:space-between"><button class="pill ${vidMuted?"d":"s"}" id="vidMute" style="font-size:14px;padding:8px 12px">${vidMuted?"🔇 Muted · tap for sound":"🔊 Sound on · tap to mute"}</button><a class="pill d" href="${esc(v.url)}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);font-size:14px;padding:8px 12px">Open in YouTube</a></div>`
+   : v.src==="search"
+     ? `<a class="pill r" href="${esc(v.url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:#000;font-size:18px;height:52px;line-height:32px;text-transform:uppercase;letter-spacing:.04em">▶ Find a short video</a>`
+     : `<a class="pill r" href="${esc(v.url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:#000;font-size:18px;height:52px;line-height:32px;text-transform:uppercase;letter-spacing:.04em">▶ Watch video</a>`;
+  $("#modal").innerHTML=`<div class="bhead"><div><div class="big" style="font-size:24px">${esc(ex.name)}</div><div class="meta">${KIND_LABEL[ex.kind]||""}</div></div><button class="pill o" id="mClose" aria-label="Close briefing">✕ Close</button></div>
+   ${vidHTML}
    <div class="panel" style="border-left:10px solid var(--sky);margin-top:12px">
      <div class="label">Briefing</div>
      <ol class="note" style="margin:8px 0 0;padding-left:20px;font-size:16px;line-height:1.45">${steps.map(s=>`<li style="margin-bottom:6px">${esc(s)}</li>`).join("")}</ol>
@@ -310,27 +318,22 @@ function openHow(id,keepMute){
      <div class="label" style="color:var(--gold)">Instructor's note</div>
      <div class="note" style="margin-top:6px;font-size:15px">${esc(ex.cue)}</div>
    </div>
-   ${yt?`<div class="vidbox ${yt.short?"short":""}"><iframe id="ytf" src="https://www.youtube-nocookie.com/embed/${yt.id}?autoplay=1&mute=${vidMuted?1:0}&playsinline=1&loop=1&playlist=${yt.id}&rel=0&modestbranding=1" title="${esc(ex.name)} video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
-     <div class="row" style="margin:8px 0 4px;justify-content:space-between"><button class="pill ${vidMuted?"d":"s"}" id="vidMute">${vidMuted?"🔇 Muted · tap for sound":"🔊 Sound on · tap to mute"}</button><a class="pill d" href="${esc(v.url)}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);font-size:14px">Open in YouTube</a></div>
-     <div class="note muted" style="font-size:12px;margin:2px 4px 12px">Plays muted so your music keeps going. Needs a connection. If the video doesn't appear (the Claude preview blocks it), use Open in YouTube.</div>`
-   :`<a class="pill r" href="${esc(v.url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:#000;font-size:20px;height:56px;line-height:36px;text-transform:uppercase;letter-spacing:.04em">▶ ${v.mine?"Watch my video":"Find a short video"}</a>
-   <div class="note muted" style="font-size:12px;margin:6px 4px 12px">${v.mine?"Your saved link (this site can't play inside the app).":"Opens YouTube Shorts results. Save a YouTube link below and it will play right here, muted."} Videos need an internet connection.</div>`}
-   <div class="panel"><div class="label">My video link</div>
-     <input id="vidIn" type="url" inputmode="url" placeholder="Paste a video link" value="${v.mine?esc(v.url):""}" style="width:100%;margin-top:8px;height:46px;border-radius:12px;border:2px solid var(--dim);background:#000;color:var(--text);padding:0 12px;font-size:15px;-webkit-user-select:text;user-select:text">
-     <div class="row" style="margin-top:8px"><button class="pill b" id="vidSave">Save link</button>${v.mine?`<button class="pill d" id="vidClear">Clear</button>`:""}</div>
-   </div>
-   <button class="pill o" id="mClose" style="width:100%;height:56px;font-size:20px;margin-top:6px">Close</button>`;
+   <div class="panel"><div class="label">Video · ${v.src==="mine"?"your saved link":v.src==="program"?"demo from your program":"none saved"}</div>
+     <input id="vidIn" type="url" inputmode="url" placeholder="Paste a video link to use instead" value="${v.src==="mine"?esc(v.url):""}" style="width:100%;margin-top:8px;height:46px;border-radius:12px;border:2px solid var(--dim);background:#000;color:var(--text);padding:0 12px;font-size:15px;-webkit-user-select:text;user-select:text">
+     <div class="row" style="margin-top:8px"><button class="pill b" id="vidSave">Save link</button><a class="pill d" href="${esc(searchUrl(ex))}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);font-size:14px;padding:8px 14px">🔍 Find another</a>${v.src==="mine"?`<button class="pill d" id="vidClear">Clear</button>`:""}</div>
+     <div class="note muted" style="font-size:12px;margin-top:6px">Videos play muted so your music keeps going, and need a connection. Find another opens YouTube Shorts search; copy a link and paste it here.</div>
+   </div>`;
   $("#modal").classList.add("on"); $("#modal").scrollTop=0;
   $("#mClose").onclick=()=>{$("#modal").classList.remove("on"); $("#modal").innerHTML="";};
   $("#vidSave").onclick=()=>{const u=$("#vidIn").value.trim(); if(!/^https?:\/\//i.test(u)){toast("Paste a full link (https://…)");return}
     S.videos=S.videos||{}; S.videos[id]=u; save(); toast("Video saved"); openHow(id)};
-  const c=$("#vidClear"); if(c) c.onclick=()=>{delete S.videos[id]; save(); openHow(id)};
+  const c=$("#vidClear"); if(c) c.onclick=()=>{delete S.videos[id]; save(); toast("Using the program's demo"); openHow(id)};
   const vm=$("#vidMute"); if(vm) vm.onclick=()=>{vidMuted=!vidMuted; openHow(id,true)};
 }
 const KIND_LABEL={main:"Main lift",arm:"Arm builder",acc:"Accessory",core:"Core",carry:"Carry",cardio:"Conditioning",care:"Shoulder care"};
 
 /* ---------- training program (loaded from a private file) ---------- */
-let PROG=null, PHASES=[], TIERS={}, TIER_STEP={}, WEEK_NOTE=[], TECH=[], BACK_RULE="", EX={}, DAYS=[], PLAN={}, HOW={},
+let VID={}, PROG=null, PHASES=[], TIERS={}, TIER_STEP={}, WEEK_NOTE=[], TECH=[], BACK_RULE="", EX={}, DAYS=[], PLAN={}, HOW={},
     ACCEL_MOVES=[], DAY_CODES=[], NW=0, ND=0, SESS_MIN=20;
 const DEFAULT_PID="size-protocol-18";
 function validateProgram(p){
@@ -348,8 +351,8 @@ function applyProgram(p){
   PROG=p; PHASES=p.cycles; TIERS=p.tiers||{}; TIER_STEP=p.tierStep||{}; WEEK_NOTE=p.weekNotes||[]; TECH=p.techniques||[];
   BACK_RULE=p.safetyRule||""; ACCEL_MOVES=(p.burstMoves&&p.burstMoves.length)?p.burstMoves:["Bike — easy spin","Elliptical","Marching in place"];
   DAYS=p.days.map(d=>({name:d.name,arms:!!d.armDay,warm:d.warmup||[],cool:d.cooldown||[]})); DAY_CODES=p.days.map((d,i)=>d.code||("D"+(i+1)));
-  PLAN=p.plan; EX={}; HOW={};
-  for(const id in p.exercises){const e=p.exercises[id]; EX[id]=[e.name,e.kind||"acc",e.load||"none",e.sets||3,e.start||0,e.inc||5,e.fixed||null,e.unit||"reps",e.cue||""]; HOW[id]=e.how||[];}
+  PLAN=p.plan; EX={}; HOW={}; VID={};
+  for(const id in p.exercises){const e=p.exercises[id]; EX[id]=[e.name,e.kind||"acc",e.load||"none",e.sets||3,e.start||0,e.inc||5,e.fixed||null,e.unit||"reps",e.cue||""]; HOW[id]=e.how||[]; if(e.video) VID[id]=e.video;}
   S.exNames=S.exNames||{}; for(const id in p.exercises) S.exNames[id]=p.exercises[id].name;
   NW=p.weeks||Math.max(...p.cycles.map(c=>c.weeks[1])); ND=p.days.length; SESS_MIN=p.sessionMinutes||20;
 }
@@ -398,7 +401,7 @@ function migrate(){
   for(const l of S.logs) if(!l.pid) l.pid=DEFAULT_PID;
   if(hadOld && !S.pid){ S.pid=DEFAULT_PID; S.progress[DEFAULT_PID]={done:S.done||{},skipped:S.skipped||{},drafts:S.drafts||{},clock:S.clock||{},ptr:S.ptr||{w:1,d:1}}; }
   S.v=2; S.done=S.done||{}; S.skipped=S.skipped||{}; S.drafts=S.drafts||{}; S.clock=S.clock||{}; S.ptr=S.ptr||{w:1,d:1}; S.mob=S.mob||{}; S.bursts=S.bursts||{};
-  S.settings=Object.assign({accel:30,vibrate:true,lead:5,beep:true},S.settings||{});
+  S.settings=Object.assign({accel:30,vibrate:true,lead:5,beep:true,awake:true},S.settings||{});
   if(S.program){ try{validateProgram(S.program); applyProgram(S.program);}catch(e){PROG=null} }
 }
 function stashProgress(){ if(S.pid) S.progress[S.pid]={done:S.done,skipped:S.skipped,drafts:S.drafts,clock:S.clock,ptr:S.ptr,mob:S.mob||{},bursts:S.bursts||{}}; }
@@ -645,8 +648,14 @@ function mob(){S.mob=S.mob||{}; const k=key(cur.w,cur.d); return S.mob[k]=S.mob[
 function burstRec(exId,si){const b=(S.bursts||{})[key(cur.w,cur.d)]; return b&&b[exId+"-"+si]}
 function clk(){S.clock=S.clock||{};return S.clock[key(cur.w,cur.d)]}
 function clkElapsed(c){return c?Math.floor((c.acc||0)+(c.run?(Date.now()-c.run)/1000:0)):0}
-function clkStart(){S.clock=S.clock||{};const k=key(cur.w,cur.d),c=S.clock[k]||{acc:0,run:null};if(!c.run)c.run=Date.now();S.clock[k]=c;save()}
-function clkPause(){const c=clk();if(c&&c.run){c.acc=(c.acc||0)+(Date.now()-c.run)/1000;c.run=null;save()}}
+function clkStart(){S.clock=S.clock||{};const k=key(cur.w,cur.d),c=S.clock[k]||{acc:0,run:null};if(!c.run)c.run=Date.now();S.clock[k]=c;save();wakeOn()}
+function clkPause(){const c=clk();if(c&&c.run){c.acc=(c.acc||0)+(Date.now()-c.run)/1000;c.run=null;save()}wakeOff()}
+let wakeL=null;
+async function wakeOn(){ if(S.settings.awake===false||!("wakeLock" in navigator)||document.hidden) return;
+  try{ if(!wakeL||wakeL.released){ wakeL=await navigator.wakeLock.request("screen"); } }catch(e){} }
+function wakeOff(){ try{ if(wakeL&&!wakeL.released) wakeL.release(); }catch(e){} wakeL=null; }
+function wakeSync(){ const c=cur&&S.clock&&S.clock[key(cur.w,cur.d)]; if(c&&c.run) wakeOn(); else wakeOff(); }
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) wakeSync(); });
 function clkToggle(){const c=clk(); if(c&&c.run) clkPause(); else clkStart(); tickUI(); vWork()}
 function paceInfo(){
   const coreIds=cur.list.filter(i=>i.section==="core");
@@ -1023,7 +1032,7 @@ function askDeleteDrill(){
   $("#delNo").onclick=()=>$("#modal").classList.remove("on");
   ok.onclick=()=>{ if(inp.value.trim().toUpperCase()!=="DELETE") return;
     S.logs=S.logs.filter(l=>!(inP(l)&&l.w===w&&l.d===d));
-    delete S.done[k]; if(S.skipped) delete S.skipped[k]; delete S.drafts[k]; if(S.clock) delete S.clock[k]; if(S.mob) delete S.mob[k]; if(S.bursts) delete S.bursts[k];
+    delete S.done[k]; if(S.skipped) delete S.skipped[k]; delete S.drafts[k]; if(S.clock) delete S.clock[k]; if(S.mob) delete S.mob[k]; if(S.bursts) delete S.bursts[k]; wakeOff();
     if(AC&&AC.w===w&&AC.d===d) AC=null;
     if(sIdx(w,d)<sIdx(S.ptr.w,S.ptr.d)) S.ptr={w,d};
     save(); $("#modal").classList.remove("on");
@@ -1241,7 +1250,9 @@ function vSys(){
   [0,20,30,45,60].forEach(s=>h+=`<button class="pill ${S.settings.accel===s?"o":"d"}" data-ac="${s}">${s?s+" s":"Off"}</button>`);
   h+=`</div><div class="label" style="margin-top:12px">Get-ready countdown before each burst</div><div class="row" style="margin-top:8px">`;
   [0,3,5,10].forEach(s=>h+=`<button class="pill ${(S.settings.lead===undefined?5:S.settings.lead)===s?"o":"d"}" data-ld="${s}">${s?s+" s":"Off"}</button>`);
-  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.beep?"b":"d"}" id="beepT">Beep in silent mode: ${S.settings.beep?"On":"Off"}</button></div>
+  h+=`</div><div class="row" style="margin-top:10px"><button class="pill ${S.settings.awake!==false?"b":"d"}" id="awakeT">Keep screen awake: ${S.settings.awake!==false?"On":"Off"}</button></div>
+   <div class="note muted" style="margin-top:6px;font-size:12px">While the drill clock runs, your phone won't dim or lock, so the burst alerts reach you. It sleeps normally when you pause or end the drill. Uses a bit more battery.</div>
+   <div class="row" style="margin-top:10px"><button class="pill ${S.settings.beep?"b":"d"}" id="beepT">Beep in silent mode: ${S.settings.beep?"On":"Off"}</button></div>
    <div class="note muted" style="margin-top:6px;font-size:12px">The chirp sounds even when your phone is on silent. Your music should dip or pause briefly, then resume. It plays while the app is on screen. The screen flash and next-set highlight always happen.</div></div>`;
   h+=`<div class="label" style="margin:16px 2px 6px">Data · ${persisted} · ${S.logs.length} sets · last backup ${S.lastBackup?new Date(S.lastBackup).toLocaleDateString():"never"}</div>`;
   h+=ioBlock("program","Training program","The plan itself: schedule, exercises, briefings, standing orders. Import a new file to start a new program.","var(--orange)");
@@ -1253,6 +1264,7 @@ function vSys(){
   $("#view").innerHTML=h;
   document.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{S.settings.accel=+b.dataset.ac;save();vSys()});
   document.querySelectorAll("[data-ld]").forEach(b=>b.onclick=()=>{S.settings.lead=+b.dataset.ld;save();vSys()});
+  $("#awakeT").onclick=()=>{S.settings.awake=S.settings.awake===false;save();if(S.settings.awake===false)wakeOff();vSys()};
   $("#beepT").onclick=()=>{S.settings.beep=!S.settings.beep;save();audioUnlocked=false;if(S.settings.beep){beep(1);setTimeout(unlockAudio,400)}vSys()};
   document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>doExport(b.dataset.ex,"file"));
   document.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>doExport(b.dataset.cp,"copy"));
